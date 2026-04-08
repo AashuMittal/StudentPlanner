@@ -32,10 +32,23 @@ app.options("*", cors());
 
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/studentbudget";
 
+console.log("MongoDB URI:", MONGO_URI ? MONGO_URI.substring(0, 30) + "..." : "NOT SET");
+
 mongoose
   .connect(MONGO_URI)
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB error:", err));
+  .then(() => {
+    console.log("✅ MongoDB connected");
+    
+    reminderScheduler.start();
+
+    app.listen(5000, () => {
+      console.log("Server is running on port 5000");
+    });
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB error:", err);
+    process.exit(1);
+  });
 
 
 const noteStorage = multer.diskStorage({
@@ -121,9 +134,3 @@ app.put("/ai/reminder-preferences", auth, aiController.updateReminderPreferences
 app.post("/create-order", auth, paymentController.createOrder);
 app.post("/verify", auth, paymentController.verifyPayment);
 app.post("/fakepremium", auth, paymentController.fakePremium);
-
-reminderScheduler.start();
-
-app.listen(5000, () => {
-  console.log("Server is running on port 5000");
-});
